@@ -1,0 +1,36 @@
+# Task 3 (Grade O), option 4: one collector, two pipelines (traces + logs)
+# Each signal goes to its own file; logs get an extra attribute from a processor.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+  resource/env:
+    attributes:
+      - key: deployment.environment
+        value: lab
+        action: upsert
+
+exporters:
+  debug:
+    verbosity: detailed
+  file/traces:
+    path: /out/traces.json
+  file/logs:
+    path: /out/logs.json
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource/env, batch]
+      exporters: [debug, file/traces]
+    logs:
+      receivers: [otlp]
+      processors: [resource/env, batch]
+      exporters: [debug, file/logs]
